@@ -1,0 +1,2 @@
+# Model seq: models/seq/word_stable/word_best.keras.
+python -m src.seq.serve_seq --run-name word_stable

@@ -1,0 +1,24 @@
+# Chạy trong Terminal PyCharm, thư mục D:\Coding\Python\HandWriting, Python 3.12.10 (.venv).
+# Phiên bản mới: ghep_handwriting_v4. Đã khởi động train nền trong phiên hỗ trợ hiện tại.
+# 1. Xem trạng thái trước, không khởi tạo thêm lượt train trùng:
+python -m src.ghep.status --run-name ghep_handwriting_v4
+
+# 2. Sau khi train xong, dừng demo cũ bằng Ctrl+C nếu đang chiếm cổng 8002, rồi chạy:
+python -m src.ghep.serve_ghep --run-name ghep_handwriting_v4
+
+# TÙY CHỌN, không cần chạy tuần tự tất cả các dòng dưới:
+# Xem tiến độ bằng Terminal khác:
+# python -m src.ghep.status --run-name ghep_handwriting_v4
+# Nếu bị dừng: dùng --resume, không chạy lại bước 1:
+# python -m src.ghep.run_full --run-name ghep_handwriting_v4 --resume --epochs 100
+# Tạo lượt mới trên máy khác (hoặc đổi --run-name nếu run hiện tại đã tồn tại):
+# python -m src.ghep.run_full --run-name ghep_handwriting_v4 --epochs 100 --init-from ghep_stable --composed-per-class 16 --glyph-validation-per-class 3 --samples-per-class 16 --robust-geometry --lr 0.0001 --patience 20 --lr-patience 6
+# Muốn chạy nền: thêm --background vào bước 1; theo dõi bằng:
+# Get-Content models\ghep_handwriting_v4\train.log -Tail 20 -Wait
+# Chỉ dùng dữ liệu chữ ghép riêng nếu không có VNOnDB: thêm --no-vnondb vào bước 1.
+# Vẽ bằng cửa sổ Tkinter:
+# python -m src.ghep.test_ghep --run-name ghep_handwriting_v4 --draw
+# Kiểm tra các InkML thuộc test, không gộp cả train:
+# python -m src.ghep.test_ghep --run-name ghep_handwriting_v4 --dir dataset/raw/inkml_ghep --split test
+# Đánh giá lại (pipeline đã tự làm sau train):
+# python -m src.ghep.evaluate_ghep --run-name ghep_handwriting_v4 --split test

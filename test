@@ -1,0 +1,19 @@
+# Chạy trong Terminal PyCharm, tại D:\Coding\Python\HandWriting, dùng Python 3.12.10 (.venv).
+# Nếu lượt baseline_stable đã bị dừng/lỗi, dùng --resume ở phần dưới; không chạy lại lệnh tạo mới.
+# 1. LẦN ĐẦU: train chữ đơn + SVM + tự đánh giá. Chạy duy nhất dòng này rồi đợi hoàn tất.
+python -m src.char.run_full --run-name baseline_stable --epochs 300 --init-from baseline
+
+# 2. Sau khi train xong, mở demo tại http://127.0.0.1:8000:
+python -m src.serve --run-name baseline_stable
+
+# Tùy chọn: xem tiến độ bằng Terminal khác (không khởi động train):
+# python -m src.char.status --run-name baseline_stable
+
+# CHỈ nếu train bị dừng: tiếp tục từ epoch đã lưu, KHÔNG chạy lại bước 1:
+# python -m src.char.run_full --run-name baseline_stable --resume --epochs 300
+
+# Nếu muốn train nền: thêm --background vào lệnh bước 1; theo dõi bằng:
+# Get-Content models\baseline_stable\train.log -Tail 20 -Wait
+
+# Đánh giá lại khi cần (pipeline đã tự làm sau khi train):
+# python -m src.char.evaluate --run-name baseline_stable --split test

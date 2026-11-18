@@ -1,0 +1,13 @@
+# LẦN ĐẦU: chạy duy nhất lệnh này để train nền.
+python -m src.seq.run_full --run-name word_stable --data-name word_v2 --init-from thu --lr 0.0005 --epochs 160 --background
+
+# Theo dõi tùy chọn (có thể chạy nhiều lần, không train thêm):
+python -m src.seq.status_seq --run-name word_stable
+
+# Chỉ dùng nếu train bị dừng giữa chừng hoặc bạn đã tạo STOP:
+# python -m src.seq.run_full --run-name word_stable --resume --epochs 160 --background
+
+# run_full sẽ tự đánh giá sau khi train xong. Nếu cần đánh giá lại bằng tay:
+# python -m src.seq.evaluate_seq --run-name word_stable --split validation --max-samples 1000 --decoder all
+
+# Sau khi thấy trạng thái completed/early_stopped, chạy file test2.
