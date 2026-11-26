@@ -1,5 +1,63 @@
 # Nhận dạng chữ viết tay tiếng Việt
 
+## Thí nghiệm riêng 70/15/15
+
+Lệnh và hướng dẫn ở `test_701515`. Các file `test`, `test1`, `test2`, `test3`, trainer triển khai và model cũ giữ nguyên.
+
+```powershell
+python -m src.experiments.run_701515 --background
+```
+
+Lệnh tạo snapshot và chạy **tuần tự** chữ đơn, chữ ghép, seq. Nếu lượt thử đã được khởi động, chỉ xem `reports/split_701515/experiment_state.json` và `experiment.log`; không chạy lại để tạo trùng. Nếu bị dừng:
+
+```powershell
+python -m src.experiments.run_701515 --resume --background
+```
+
+Ngân sách mặc định: chữ đơn 300 epoch, ghép 100, seq 160, có dừng sớm theo validation. Dữ liệu thử và model có tên riêng:
+
+| Model thử | Train | Validation | Test |
+|---|---:|---:|---:|
+| `models/baseline_701515` | 2.071 | 444 | 444 |
+| `models/seq/word_701515` | 77.521 | 16.612 | 16.611 |
+| `models/ghep_701515` | 3.947 | 846 | 846 |
+
+Đây là 70/15/15 theo quota nguyên gần nhất, không thể luôn có đúng số thập phân vì mẫu phải nguyên. Tổng số mẫu mỗi model bằng lượt gốc. Seq chia toàn bộ người viết vào một tập (129/35/37 người); không còn split chính thức VNOnDB. Chữ đơn chỉ một người, chia có stratify và giữ các nét trùng hoàn toàn trong train; chưa có kiểm chứng người viết mới.
+
+Chữ ghép chia raw theo người/style trước, rồi sinh lại dữ liệu phái sinh từ glyph thuộc split chữ đơn mới tương ứng. Không chuyển những mẫu composed cũ sang tập khác vì các mẫu đó có thể dùng chung nét nguồn. Source `composed` được báo cáo riêng; cùng một người viết nhưng không trùng glyph nguồn. Báo cáo nguồn, từng mẫu và giao test cũ/mới nằm dưới `reports/split_701515/`.
+
+**Khởi tạo ngẫu nhiên, không dùng model cũ:** sau khi đổi split, model cũ có thể đã học mẫu test mới. Mean/variance, SVM, từ điển và tham số kết hợp chỉ fit trên train/validation mới tương ứng. Kết quả chạy 1 epoch dùng kiểm tra kỹ thuật không phải chất lượng model cuối; lượt đầy đủ dùng resume để tiếp tục đúng khởi tạo ngẫu nhiên đó.
+
+Trainer của thí nghiệm là bản đóng băng trong `reports/split_701515/workspace/src`, cấu hình riêng để dùng snapshot mới và có retry ghi file Windows. Không sửa code của các trainer triển khai. Manifest `original_files.json` lưu SHA256 của model/cấu hình/trainer cũ; kiểm tra:
+
+```powershell
+python -m src.experiments.prepare_701515 --verify-originals
+```
+
+Sau khi cả ba model hoàn tất, chương trình so sánh trên **cùng mẫu thuộc giao test cũ và test mới**, tránh đánh giá model cũ trên dữ liệu cũ từng train. Chữ ghép chỉ so giao raw, không dùng composed mà glyph nguồn có thể bị model cũ thấy. Giao test này nhỏ hơn tổng test, nên đọc kèm số mẫu. Không dùng kết quả test để chọn checkpoint hoặc alpha.
+
+Đã có tiến trình theo dõi riêng cho hai model `ghep_701515` và `word_701515`. Nó chờ train, fit SVM và đánh giá xong, sau đó nạp lại các model và gọi đường nhận dạng demo. Chỉ khi các kiểm tra thành công mới tạo `reports/split_701515/READY_TO_TEST.txt` và hiện thông báo Windows **“ĐÃ HOÀN THÀNH”**. Nếu tiến trình train dừng bất thường, watcher thử tiếp tục tối đa 3 lần từ checkpoint và báo lỗi nếu chưa hoàn thành. Nó không tự gửi tin nhắn vào cuộc trò chuyện ChatGPT.
+
+```powershell
+Get-Content reports\split_701515\completion_watch.json
+# Khi hoàn thành:
+Get-Content reports\split_701515\READY_TO_TEST.txt
+```
+
+Nếu cần khởi động lại watcher sau khi đã đóng máy, chạy `python -m src.experiments.notify_701515 --background`. Không thay đổi trạng thái model thành hoàn tất chỉ vì đã có một checkpoint; thông báo hoàn tất yêu cầu cả hai pipeline đánh giá xong.
+
+**Giới hạn so sánh:** model cũ dùng chuyển trọng số, lượt 70/15/15 học từ đầu; các tập test cũng khác. Không kết luận mức tăng/giảm chỉ do tỷ lệ. Nếu cần nghiên cứu riêng tác động của tỷ lệ thì phải có control học từ đầu với split cũ, cùng seed/ngân sách và nhiều lần lặp.
+
+Quay lại như cũ không cần sửa trainer: chỉ chạy các lệnh demo gốc:
+
+```powershell
+python -m src.serve --run-name baseline_stable
+python -m src.seq.serve_seq --run-name word_stable
+python -m src.ghep.serve_ghep --run-name ghep_handwriting_v4
+```
+
+Các model thử không được tự thay thành model chính. Dữ liệu/model/báo cáo sinh ra tiếp tục được `.gitignore` loại khỏi Git.
+
 Model `seq` nhận chuỗi nét bút của **một từ**. Model `baseline` nhận **một ký tự**. Ảnh chụp canvas không chứa thứ tự/hướng nét để phát lại trực tiếp cho các model này.
 
 ## Chữ ghép: ghep_stable (Python 3.12.10)

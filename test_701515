@@ -1,0 +1,38 @@
+# THỬ NGHIỆM RIÊNG. Không thay test/test1/test2/test3 hoặc các model cũ.
+# Các lệnh dưới chạy trong Terminal PyCharm, thư mục dự án, Python 3.12.10 (.venv).
+
+# Xem báo cáo chia tập (đã chuẩn bị trong phiên hỗ trợ):
+Get-Content reports\split_701515\split_summary.json
+
+# Train tuần tự chữ đơn -> chữ ghép -> seq, từ đầu (không dùng trọng số model cũ):
+# Lượt đầy đủ được khởi động nền trong phiên hỗ trợ. Xem trạng thái trước, không chạy trùng.
+Get-Content reports\split_701515\experiment_state.json
+Get-Content reports\split_701515\experiment.log -Tail 20 -Wait
+
+# Đã đặt thông báo Windows khi ghep_701515 + word_701515 train/đánh giá/nạp demo xong.
+# Xem trạng thái theo dõi:
+# Get-Content reports\split_701515\completion_watch.json
+# Khi hoàn thành sẽ có file này kèm lệnh test:
+# Get-Content reports\split_701515\READY_TO_TEST.txt
+
+# Nếu pipeline đã bị dừng, tiếp tục model dở và chạy các model còn lại:
+# python -m src.experiments.run_701515 --resume --background
+
+# Tạo và chạy trên máy khác khi chưa có các run *_701515:
+# python -m src.experiments.run_701515 --background
+
+# Khi đã train xong, mở từng demo thử nghiệm:
+# python -m src.serve --run-name baseline_701515
+# python -m src.seq.serve_seq --run-name word_701515
+# python -m src.ghep.serve_ghep --run-name ghep_701515
+
+# QUAY LẠI MODEL CŨ: chỉ mở theo tên cũ, không cần sửa trainer hoặc dữ liệu:
+# python -m src.serve --run-name baseline_stable
+# python -m src.seq.serve_seq --run-name word_stable
+# python -m src.ghep.serve_ghep --run-name ghep_handwriting_v4
+
+# Kiểm tra các model/cấu hình/trainer gốc vẫn giữ nguyên:
+# python -m src.experiments.prepare_701515 --verify-originals
+
+# So sánh lại trên giao test cũ/mới chưa từng dùng học ở cả hai phía:
+# python -m src.experiments.compare_701515
